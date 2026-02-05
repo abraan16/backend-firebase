@@ -11,15 +11,27 @@ async function getAllInteractions() {
 }
 
 async function createInteraction(interactionData) {
-    const { patientId, message } = interactionData;
+    const {
+        patientId,
+        organizationId,
+        message,
+        sender, // 'patient' o 'bot'
+        timestamp, // El timestamp del mensaje original
+    } = interactionData;
+
+    if (!patientId || !organizationId || !message || !sender) {
+        throw new Error('Faltan datos obligatorios para crear la interacción.');
+    }
 
     const interactionRef = await db.collection('interactions').add({
         patientId,
+        organizationId,
         message,
-        created_at: new Date().toISOString(),
+        sender,
+        created_at: timestamp ? new Date(timestamp * 1000).toISOString() : new Date().toISOString(),
     });
 
-    return { id: interactionRef.id, patientId, message };
+    return { id: interactionRef.id, ...interactionData };
 }
 
 async function getInteractionById(id) {
