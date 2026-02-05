@@ -1,7 +1,8 @@
 
-const express = require('express');
+import express from 'express';
+import * as organizationController from '../controllers/organizations';
+
 const router = express.Router();
-const organizationController = require('../controllers/organizations.js');
 
 router.get('/', organizationController.getAllOrganizations);
 router.post('/', organizationController.createOrganization);
@@ -9,4 +10,4 @@ router.get('/:id', organizationController.getOrganizationById);
 router.put('/:id', organizationController.updateOrganization);
 router.delete('/:id', organizationController.deleteOrganization);
 
-module.exports = router;
+export default router;
