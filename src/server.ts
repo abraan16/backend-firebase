@@ -19,39 +19,25 @@ app.get('/', (req, res) => {
     res.send('Hello World! Diana IA is running.');
 });
 
-// --- WEBHOOK DE WHATSAPP ---
+// --- WEBHOOK DE WHATSAPP PARA EVOLUTION API ---
 
-// Leer el token de verificación desde las variables de entorno
-const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN;
-
-// VERIFICACIÓN DEL WEBHOOK (GET)
+// Evolution API no requiere una verificación GET compleja como la de Meta.
+// Podemos usar este endpoint para confirmar que el servidor está activo.
 app.get('/api/whatsapp/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  if (mode && token) {
-    if (mode === 'subscribe' && token === WEBHOOK_VERIFY_TOKEN) {
-      console.log('WEBHOOK_VERIFIED');
-      res.status(200).send(challenge);
-    } else {
-      console.error('Webhook verification failed. Token mismatch.');
-      res.sendStatus(403);
-    }
-  } else {
-      res.sendStatus(400);
-  }
+  console.log("GET request to /api/whatsapp/webhook received. Service is active.");
+  res.status(200).send('Webhook endpoint for Evolution API is active.');
 });
 
 // RECEPCIÓN DE MENSAJES (POST)
+// Aquí es donde Evolution API enviará los datos de los mensajes entrantes.
 app.post('/api/whatsapp/webhook', async (req, res) => {
     try {
-        console.log("Webhook received:", JSON.stringify(req.body, null, 2));
-        // Aquí tu lógica existente para procesar el mensaje
+        console.log("Webhook received from Evolution API:", JSON.stringify(req.body, null, 2));
+        // La lógica en inputService ya está preparada para este formato de payload.
         const result = await inputService.handleIncomingMessage(req.body);
-        res.status(200).json(result);
+        res.status(200).json({ status: "ok", message: "Message processed", result });
     } catch (error) {
-        console.error('Error processing webhook:', error);
+        console.error('Error processing webhook from Evolution API:', error);
         res.status(500).json({ error: 'Failed to process webhook' });
     }
 });
