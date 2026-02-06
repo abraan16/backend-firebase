@@ -1,0 +1,10 @@
+# nixpacks.toml
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.start]
+cmd = "node src/server.js"
+
+[variables]
+NODE_VERSION = "20"

@@ -5,33 +5,33 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendMessage = sendMessage;
 const axios_1 = __importDefault(require("axios"));
+// Asegúrate de que dotenv/config se cargue al inicio
 require("dotenv/config");
+
 const evolutionApiUrl = process.env.EVOLUTION_API_URL;
 const evolutionApiKey = process.env.EVOLUTION_API_KEY;
-if (!evolutionApiUrl || !evolutionApiKey) {
-    throw new Error('EVOLUTION_API_URL and EVOLUTION_API_KEY must be set in the environment variables.');
+const evolutionInstance = process.env.EVOLUTION_INSTANCE;
+
+if (!evolutionApiUrl || !evolutionApiKey || !evolutionInstance) {
+    throw new Error('EVOLUTION_API_URL, EVOLUTION_API_KEY, and EVOLUTION_INSTANCE must be set in the environment variables.');
 }
-/**
- * Envía un mensaje de texto a un número de teléfono a través de la Evolution API.
- * @param params - Los parámetros para enviar el mensaje.
- * @returns La respuesta de la API de Evolution.
- */
-async function sendMessage({ instanceName, phoneNumber, text }) {
-    const endpoint = `${evolutionApiUrl}/message/sendText/${instanceName}`;
-    // El número de teléfono en Evolution API debe terminar en @s.whatsapp.net
+
+async function sendMessage({ phoneNumber, text }) {
+    const encodedInstanceName = encodeURIComponent(evolutionInstance);
+    const endpoint = `${evolutionApiUrl}/message/sendText/${encodedInstanceName}`;
     const remoteJid = `${phoneNumber}@s.whatsapp.net`;
+
     const payload = {
         number: remoteJid,
         options: {
             delay: 1200,
             presence: 'composing'
         },
-        textMessage: {
-            text: text
-        }
+        text: text // Propiedad 'text' en el nivel superior
     };
+
     try {
-        console.log(`Sending message to ${remoteJid} via instance ${instanceName}...`);
+        console.log(`Sending message to ${remoteJid} via instance ${evolutionInstance}...`);
         const response = await axios_1.default.post(endpoint, payload, {
             headers: {
                 'Content-Type': 'application/json',
@@ -40,18 +40,14 @@ async function sendMessage({ instanceName, phoneNumber, text }) {
         });
         console.log('Message sent successfully. API Response:', response.data);
         return response.data;
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error sending message via Evolution API:');
         if (axios_1.default.isAxiosError(error)) {
             console.error('Status:', error.response?.status);
-            console.error('Data:', error.response?.data);
-            console.error('Headers:', error.response?.headers);
-        }
-        else {
+            console.error('Data:', JSON.stringify(error.response?.data, null, 2));
+        } else {
             console.error('An unexpected error occurred:', error);
         }
-        // Re-lanzamos el error para que el servicio que llama pueda manejarlo.
         throw error;
     }
 }
