@@ -13,6 +13,18 @@ export interface PatientData {
     phone: string;
 }
 
+export async function getPatientByPhone(phone: string): Promise<Patient | null> {
+    const patientsQuery = db.collection('patients').where('phone', '==', phone).limit(1);
+    const snapshot = await patientsQuery.get();
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    const patientDoc = snapshot.docs[0];
+    return { id: patientDoc.id, ...patientDoc.data() } as Patient;
+}
+
 export async function getAllPatients(): Promise<Patient[]> {
     const patientsSnapshot = await db.collection('patients').get();
     const patients: Patient[] = [];

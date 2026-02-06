@@ -1,8 +1,8 @@
 
-const organizationService = require('./organizations.js');
-const patientService = require('./patients.js');
-const interactionService = require('./interactions.js');
-// Importamos los nuevos servicios
+// Importar desestructurando las funciones de cada servicio
+const { getOrganizationByInstanceName } = require('./organizations.js');
+const { getPatientByPhone, createPatient } = require('./patients.js');
+const { createInteraction } = require('./interactions.js');
 const { getIntelligenceResponse } = require('./intelligenceService.js');
 const { sendMessage } = require('./whatsappService.js');
 
@@ -33,19 +33,19 @@ async function handleIncomingMessage(payload) {
     }
 
     // --- 1. NORMALIZACIÓN DE IDENTIDAD ---
-    const organization = await organizationService.getOrganizationByInstanceName(instanceName);
+    const organization = await getOrganizationByInstanceName(instanceName);
     if (!organization) {
         console.error(`Organización no encontrada para la instancia: ${instanceName}`);
         return { status: "error", message: `Organización no configurada: ${instanceName}` };
     }
 
-    let patient = await patientService.getPatientByPhone(phoneNumber, organization.id);
+    let patient = await getPatientByPhone(phoneNumber);
     if (!patient) {
         console.log(`Paciente no encontrado con teléfono ${phoneNumber}. Creando uno nuevo...`);
-        patient = await patientService.createPatient({
+        // Asumimos que la creación no depende de la organización por ahora, o ajustamos createPatient
+        patient = await createPatient({
             name: data.pushName || 'Nuevo Contacto',
             phone: phoneNumber,
-            organizationId: organization.id,
         });
         console.log(`Paciente creado con ID: ${patient.id}`);
     }
@@ -58,7 +58,7 @@ async function handleIncomingMessage(payload) {
         return { status: "ignored", reason: "Empty or unsupported message type" };
     }
 
-    await interactionService.createInteraction({
+    await createInteraction({
         patientId: patient.id,
         organizationId: organization.id,
         message: messageContent,
@@ -83,7 +83,7 @@ async function handleIncomingMessage(payload) {
         });
 
         // Registrar la interacción SALIENTE
-        await interactionService.createInteraction({
+        await createInteraction({
             patientId: patient.id,
             organizationId: organization.id,
             message: replyText,
