@@ -1,6 +1,4 @@
-
 import express from 'express';
-import 'dotenv/config';
 
 import userRoutes from './routes/users';
 import organizationRoutes from './routes/organizations';
@@ -26,26 +24,40 @@ app.get('/webhook/evolution', (req, res) => {
   res.status(200).send('Webhook endpoint for Evolution API is active.');
 });
 
-// RECEPCIÓN DE MENSAJES (POST)
+/**
+ * Maneja los webhooks entrantes de Evolution API para los mensajes.
+ * Este es el punto de entrada principal para la lógica de la IA.
+ */
 app.post('/webhook/evolution', async (req, res) => {
+    console.log("Webhook received from Evolution API:", req.body);
+
+    // El payload contiene el evento y los datos del mensaje
+    const payload = req.body;
+
+    // Validar que el payload tenga la estructura esperada
+    if (!payload.event || payload.event !== 'messages.upsert') {
+        console.log("Ignorando evento que no es un mensaje nuevo.");
+        return res.status(200).send('Event ignored');
+    }
+
     try {
-        console.log("Webhook received from Evolution API:", JSON.stringify(req.body, null, 2));
-        const result = await inputService.handleIncomingMessage(req.body);
-        res.status(200).json({ status: "ok", message: "Message processed", result });
+        // Llamar al servicio de input para procesar el mensaje
+        const result = await inputService.handleIncomingMessage(payload);
+        console.log("Processing result:", result);
+        res.status(200).json(result);
     } catch (error) {
-        console.error('Error processing webhook from Evolution API:', error);
-        res.status(500).json({ error: 'Failed to process webhook' });
+        console.error("Error processing webhook:", error);
+        res.status(500).json({ status: "error", message: error.message });
     }
 });
 
+// --- RUTAS DE LA API PARA LA GESTIÓN DEL SISTEMA ---
+app.use('/api/users', userRoutes);
+app.use('/api/organizations', organizationRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/interactions', interactionRoutes);
 
-// --- RUTAS DE API EXISTENTES ---
-app.use('/users', userRoutes);
-app.use('/organizations', organizationRoutes);
-app.use('/patients', patientRoutes);
-app.use('/interactions', interactionRoutes);
-
-
+// Iniciar el servidor
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });

@@ -1,6 +1,5 @@
 
 import axios from 'axios';
-import 'dotenv/config';
 
 // Interfaz para definir la estructura de la respuesta de Evolution API
 interface EvolutionApiResponse {
