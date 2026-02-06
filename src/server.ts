@@ -47,7 +47,11 @@ app.post('/webhook/evolution', async (req, res) => {
         res.status(200).json(result);
     } catch (error) {
         console.error("Error processing webhook:", error);
-        res.status(500).json({ status: "error", message: error.message });
+        let message = 'An unknown error occurred while processing the webhook.';
+        if (error instanceof Error) {
+            message = error.message;
+        }
+        res.status(500).json({ status: "error", message });
     }
 });
 
