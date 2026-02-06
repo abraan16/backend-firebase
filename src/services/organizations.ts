@@ -5,6 +5,7 @@ export interface Organization {
     id: string;
     name: string;
     instanceName: string;
+    type: 'manager' | 'client'; // Nuevo campo para distinguir el tipo de organización
     created_at: string;
     updated_at: string;
 }
@@ -12,6 +13,7 @@ export interface Organization {
 export interface OrganizationData {
     name: string;
     instanceName: string;
+    type?: 'manager' | 'client'; // El tipo es opcional al crear
 }
 
 export async function getAllOrganizations(): Promise<Organization[]> {
@@ -24,7 +26,7 @@ export async function getAllOrganizations(): Promise<Organization[]> {
 }
 
 export async function createOrganization(organizationData: OrganizationData): Promise<Organization> {
-    const { name, instanceName } = organizationData; // Añadido instanceName
+    const { name, instanceName, type = 'client' } = organizationData; // Se establece 'client' por defecto
 
     if (!name || !instanceName) {
         throw new Error('El nombre de la organización y el instanceName son obligatorios.');
@@ -32,15 +34,21 @@ export async function createOrganization(organizationData: OrganizationData): Pr
 
     const dataToStore = {
         name,
-        instanceName, // Guardamos el nuevo campo
+        instanceName,
+        type, // Se guarda el tipo
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     }
 
     const organizationRef = await db.collection('organizations').add(dataToStore);
 
-    return { id: organizationRef.id, ...dataToStore };
+    // Aseguramos que el tipo devuelto sea 'manager' o 'client'
+    const finalData = { id: organizationRef.id, ...dataToStore };
+    
+    // El tipo de `finalData` es inferido correctamente por TypeScript, pero para ser explícitos:
+    return finalData as Organization;
 }
+
 
 export async function getOrganizationById(id: string): Promise<Organization | null> {
     const organizationDoc = await db.collection('organizations').doc(id).get();
@@ -50,7 +58,7 @@ export async function getOrganizationById(id: string): Promise<Organization | nu
     return { id: organizationDoc.id, ...organizationDoc.data() } as Organization;
 }
 
-// --- NUEVA FUNCIÓN ---
+// --- NUEVA FUNCIÓN -- -
 // Encuentra una organización por su nombre de instancia de WhatsApp
 export async function getOrganizationByInstanceName(instanceName: string): Promise<Organization | null> {
     const snapshot = await db.collection('organizations').where('instanceName', '==', instanceName).limit(1).get();
