@@ -75,9 +75,8 @@ async function handleIncomingMessage(payload) {
             userName: patient.name,
         });
 
-        // Enviar la respuesta usando el servicio de WhatsApp
+        // Enviar la respuesta usando el servicio de WhatsApp (ya no necesita instanceName)
         await sendMessage({
-            instanceName: instanceName,
             phoneNumber: phoneNumber,
             text: replyText,
         });
