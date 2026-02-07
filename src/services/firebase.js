@@ -1,16 +1,27 @@
-const admin = require('firebase-admin');
-require('dotenv').config();
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+import admin from 'firebase-admin';
 
-if (!serviceAccount) {
+// Cargar la variable de entorno
+const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!serviceAccountString) {
   throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
 }
 
-admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(serviceAccount))
-});
+try {
+  const serviceAccount = JSON.parse(serviceAccountString);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (error) {
+    if (error.code === 'app/duplicate-app') {
+        console.log('Firebase app already initialized.');
+    } else {
+        console.error('Error initializing Firebase Admin:', error);
+        throw error;
+    }
+}
 
 const db = admin.firestore();
-
-module.exports = db;
+export default db;

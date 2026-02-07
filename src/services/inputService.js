@@ -1,10 +1,10 @@
 
-// Importar desestructurando las funciones de cada servicio
-const { getOrganizationByInstanceName } = require('./organizations.js');
-const { getPatientByPhone, createPatient } = require('./patients.js');
-const { createInteraction } = require('./interactions.js');
-const { getIntelligenceResponse } = require('./intelligenceService.js');
-const { sendMessage } = require('./whatsappService.js');
+// Importar usando la sintaxis moderna de ES Modules
+import { getOrganizationByInstanceName } from './organizations.js';
+import { getPatientByPhone, createPatient } from './patients.js';
+import { createInteraction } from './interactions.js';
+import { getIntelligenceResponse } from './intelligenceService.js';
+// import { sendMessage } from './whatsappService.js'; // OJO: Archivo aún no existe, comentado temporalmente
 
 /**
  * El corazón del sistema de enrutamiento y normalización.
@@ -42,7 +42,6 @@ async function handleIncomingMessage(payload) {
     let patient = await getPatientByPhone(phoneNumber);
     if (!patient) {
         console.log(`Paciente no encontrado con teléfono ${phoneNumber}. Creando uno nuevo...`);
-        // Asumimos que la creación no depende de la organización por ahora, o ajustamos createPatient
         patient = await createPatient({
             name: data.pushName || 'Nuevo Contacto',
             phone: phoneNumber,
@@ -69,37 +68,35 @@ async function handleIncomingMessage(payload) {
 
     // --- 3. GENERAR Y ENVIAR RESPUESTA DE IA ---
     try {
-        // Obtener la respuesta del "cerebro" de IA
         const replyText = await getIntelligenceResponse({
             userMessage: messageContent,
             userName: patient.name,
         });
 
-        // Enviar la respuesta usando el servicio de WhatsApp (ya no necesita instanceName)
+        // OJO: Envío de mensaje deshabilitado hasta que 'whatsappService.js' exista
+        /*
         await sendMessage({
             phoneNumber: phoneNumber,
             text: replyText,
         });
+        */
 
-        // Registrar la interacción SALIENTE
         await createInteraction({
             patientId: patient.id,
             organizationId: organization.id,
             message: replyText,
-            sender: 'bot', // Este mensaje lo envía nuestro bot
-            timestamp: Math.floor(Date.now() / 1000), // Usamos el timestamp actual
+            sender: 'bot', 
+            timestamp: Math.floor(Date.now() / 1000), 
         });
         console.log(`Interacción SALIENTE registrada para el paciente ${patient.id}`);
 
     } catch (error) {
         console.error("Error en el flujo de respuesta de la IA:", error);
-        // Si falla el envío, al menos el mensaje entrante quedó registrado.
         return { status: "error", message: "Failed to generate or send AI response" };
     }
 
     return { status: "processed_and_replied", patientId: patient.id };
 }
 
-module.exports = {
-    handleIncomingMessage,
-};
+// Exportar usando la sintaxis moderna
+export { handleIncomingMessage };

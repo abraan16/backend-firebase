@@ -1,7 +1,6 @@
+import db from './firebase.js';
 
-const db = require('./firebase.js');
-
-async function getAllUsers() {
+export async function getAllUsers() {
     const usersSnapshot = await db.collection('users').get();
     const users = [];
     usersSnapshot.forEach(doc => {
@@ -10,7 +9,7 @@ async function getAllUsers() {
     return users;
 }
 
-async function createUser(userData) {
+export async function createUser(userData) {
     const { email, password, name } = userData;
 
     const userRef = await db.collection('users').add({
@@ -22,7 +21,7 @@ async function createUser(userData) {
     return { id: userRef.id, email, name };
 }
 
-async function getUserById(id) {
+export async function getUserById(id) {
     const userDoc = await db.collection('users').doc(id).get();
     if (!userDoc.exists) {
         return null;
@@ -30,7 +29,7 @@ async function getUserById(id) {
     return { id: userDoc.id, ...userDoc.data() };
 }
 
-async function updateUser(id, userData) {
+export async function updateUser(id, userData) {
     const userRef = db.collection('users').doc(id);
     await userRef.update({
         ...userData,
@@ -40,14 +39,6 @@ async function updateUser(id, userData) {
     return { id: updatedDoc.id, ...updatedDoc.data() };
 }
 
-async function deleteUser(id) {
+export async function deleteUser(id) {
     await db.collection('users').doc(id).delete();
 }
-
-module.exports = {
-    getAllUsers,
-    createUser,
-    getUserById,
-    updateUser,
-    deleteUser,
-};
